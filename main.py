@@ -69,9 +69,9 @@ H       -1.62635        1.28445       -0.00726
 H       -2.90504        2.10946       -0.37724
 """, basis="cc-pVDZ")
 
-print_mrchem_bas_file(mol, "tmp.bas")
+print_mrchem_bas_file(mol, "mrchem.bas")
 
 hf = mol.HF()
 hf.run()
 
-print_mrchem_mo_file(mol, hf, "tmp.mop")
+print_mrchem_mo_file(mol, hf, "mrchem.mop")
