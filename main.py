@@ -1,5 +1,4 @@
 import pyscf
-from pprint import pprint
 
 
 def print_mrchem_bas_file(mol, filename):
@@ -56,14 +55,23 @@ def print_mrchem_bas_file(mol, filename):
                     f.write("\n")
 
 
+def print_mrchem_mo_file(mol, hf, filename):
+    with open(filename, "w") as f:
+        nao = mol.nao
+        f.write(f"{nao:12}\n")
+        for x in hf.mo_coeff.ravel():
+            f.write(f"{x:20.15f}\n")
+
+
 mol = pyscf.M(atom="""
 O       -2.61568        1.24534        0.01028
 H       -1.62635        1.28445       -0.00726
 H       -2.90504        2.10946       -0.37724
 """, basis="cc-pVDZ")
 
-print("\n" + "#" * 80)
-pprint(mol._basis)
-print("#" * 80 + "\n")
-
 print_mrchem_bas_file(mol, "tmp.bas")
+
+hf = mol.HF()
+hf.run()
+
+print_mrchem_mo_file(mol, hf, "tmp.mop")
