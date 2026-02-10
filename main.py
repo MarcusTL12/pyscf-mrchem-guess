@@ -1,6 +1,13 @@
-def main():
-    print("Hello from pyscf-mrchem-guess!")
+import pyscf
+from pprint import pprint
+import sys
 
+mol = pyscf.M(atom="""
+              O 0 0 0
+              H 1 0 0
+              H 0 1 0
+              """, basis="cc-pVDZ")
 
-if __name__ == "__main__":
-    main()
+ovlp = mol.intor("int1e_ovlp")
+
+pyscf.tools.dump_mat.dump_tri(sys.stdout, ovlp, label=mol.ao_labels(), ncol=6)
