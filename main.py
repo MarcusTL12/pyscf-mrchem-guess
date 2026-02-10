@@ -59,14 +59,14 @@ def print_mrchem_mo_file(mol, hf, filename):
     with open(filename, "w") as f:
         nao = mol.nao
         f.write(f"{nao:12}\n")
-        for x in hf.mo_coeff.ravel():
+        for x in hf.mo_coeff.T.flatten():
             f.write(f"{x:20.15f}\n")
 
 
 mol = pyscf.M(atom="""
-O       -2.61568        1.24534        0.01028
-H       -1.62635        1.28445       -0.00726
-H       -2.90504        2.10946       -0.37724
+O 0 0 0
+H 1 0 0
+H 0 1 0
 """, basis="cc-pVDZ")
 
 print_mrchem_bas_file(mol, "mrchem.bas")
