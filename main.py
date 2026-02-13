@@ -65,8 +65,8 @@ def print_mrchem_mo_file(mol, C, filename):
 
 
 def localize_occ_mo(mol, hf):
-    nao = mol.nao
-    C = hf.mo_coeff[:, 0:nao]
+    no = mol.nelectron // 2
+    C = hf.mo_coeff[:, 0:no]
 
     return pyscf.lo.boys.Boys(mol).kernel(C)
 
@@ -85,7 +85,7 @@ hf.run()
 
 hf.analyze()
 
-C = hf.mo_coeff # canonical
-# C = localize_occ_mo(mol, hf) # localized
+# C = hf.mo_coeff # canonical
+C = localize_occ_mo(mol, hf) # localized
 
 print_mrchem_mo_file(mol, C, "mrchem.mop")
