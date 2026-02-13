@@ -1,4 +1,5 @@
 import pyscf
+from pprint import pprint
 
 
 def print_mrchem_bas_file(mol, filename):
@@ -55,23 +56,36 @@ def print_mrchem_bas_file(mol, filename):
                     f.write("\n")
 
 
-def print_mrchem_mo_file(mol, hf, filename):
+def print_mrchem_mo_file(mol, C, filename):
     with open(filename, "w") as f:
         nao = mol.nao
         f.write(f"{nao:12}\n")
-        for x in hf.mo_coeff.T.flatten():
+        for x in C.T.flatten():
             f.write(f"{x:20.15f}\n")
 
+
+def localize_occ_mo(mol, hf):
+    nao = mol.nao
+    C = hf.mo_coeff[:, 0:nao]
+
+    return pyscf.lo.boys.Boys(mol).kernel(C)
 
 mol = pyscf.M(atom="""
 O 0 0 0
 H 1 0 0
 H 0 1 0
-""", basis="cc-pVDZ")
+""", basis="cc-pVDZ", charge=0, verbose=4)
 
 print_mrchem_bas_file(mol, "mrchem.bas")
 
-hf = mol.HF()
+hf = mol.RKS()
+hf.xc = "pbe"
+# hf = mol.HF()
 hf.run()
 
-print_mrchem_mo_file(mol, hf, "mrchem.mop")
+hf.analyze()
+
+C = hf.mo_coeff # canonical
+# C = localize_occ_mo(mol, hf) # localized
+
+print_mrchem_mo_file(mol, C, "mrchem.mop")
