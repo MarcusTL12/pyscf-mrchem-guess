@@ -1,6 +1,31 @@
 import pyscf
 from pprint import pprint
 
+periodic_table_str = """
+H                                                  He
+Li Be                               B  C  N  O  F  Ne
+Na Mg                               Al Si P  S  Cl Ar
+K  Ca Sc Ti V  Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr
+Rb Sr Y  Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I  Xe
+"""
+
+periodic_table_dict = {}
+
+for i, s in enumerate(periodic_table_str.split()):
+    periodic_table_dict[s] = i + 1
+
+
+def sort_atom_str(atom_str: str):
+    lines = atom_str.splitlines()
+
+    sortable = [(periodic_table_dict[l.split()[0]], l)
+                for l in lines if len(l.strip()) > 0]
+    sortable.sort()
+
+    lines = [l for _, l in sortable]
+
+    return '\n'.join(lines)
+
 
 def print_mrchem_bas_file(mol, filename):
     with open(filename, "w") as f:
@@ -70,11 +95,20 @@ def localize_occ_mo(mol, hf):
 
     return pyscf.lo.boys.Boys(mol).kernel(C)
 
-mol = pyscf.M(atom="""
-O 0 0 0
-H 1 0 0
-H 0 1 0
-""", basis="cc-pVDZ", charge=0, verbose=4)
+
+xyz = """
+O         4.40988174540998    7.45211310544178    6.80383413247153
+H         4.02905772874383    7.65799771302110    5.92947407439696
+C         3.47744106818372    7.98095365314221    7.77472943007089
+H         3.37682956954364    9.06072722191245    7.65247353819164
+H         3.87283422362894    7.76389288840846    8.76739659140869
+H         2.50240699396907    7.50433645096497    7.66056354455503
+"""
+
+xyz = sort_atom_str(xyz)
+print(xyz)
+
+mol = pyscf.M(atom=xyz, basis="sto-6G", charge=0, verbose=4)
 
 print_mrchem_bas_file(mol, "mrchem.bas")
 
@@ -85,7 +119,8 @@ hf.run()
 
 hf.analyze()
 
-# C = hf.mo_coeff # canonical
-C = localize_occ_mo(mol, hf) # localized
+C = hf.mo_coeff # canonical
+# C = localize_occ_mo(mol, hf) # localized
+# C = pyscf.numpy.identity(mol.nao)
 
 print_mrchem_mo_file(mol, C, "mrchem.mop")
