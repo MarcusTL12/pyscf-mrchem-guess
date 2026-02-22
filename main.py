@@ -97,24 +97,32 @@ def localize_occ_mo(mol, hf):
 
 
 xyz = """
-O         4.40988174540998    7.45211310544178    6.80383413247153
-H         4.02905772874383    7.65799771302110    5.92947407439696
-C         3.47744106818372    7.98095365314221    7.77472943007089
-H         3.37682956954364    9.06072722191245    7.65247353819164
-H         3.87283422362894    7.76389288840846    8.76739659140869
-H         2.50240699396907    7.50433645096497    7.66056354455503
+C       -2.04774        0.19202        0.00000
+H       -0.93834        0.19202        0.00000
+H       -2.41754        0.90463       -0.76564
+H       -2.41754        0.49878        0.99996
+H       -2.41754       -0.82735       -0.23432
 """
 
-xyz = sort_atom_str(xyz)
-print(xyz)
+# basis = {
+#     'H': "cc-pVDZ",
+#     'O': "cc-pVDZ",
+#     'C': "cc-pVDZ",
+#     'Br': "cc-pVDZ",
+#     'Sc': "STO-6G",
+# }
 
-mol = pyscf.M(atom=xyz, basis="sto-6G", charge=0, verbose=4)
+basis = "aug-cc-pVQZ"
+
+xyz = sort_atom_str(xyz)
+
+mol = pyscf.M(atom=xyz, basis=basis, charge=0, verbose=4)
 
 print_mrchem_bas_file(mol, "mrchem.bas")
 
-hf = mol.RKS()
-hf.xc = "pbe"
-# hf = mol.HF()
+# hf = mol.RKS()
+# hf.xc = "b3lyp5"
+hf = mol.HF()
 hf.run()
 
 hf.analyze()
