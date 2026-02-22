@@ -88,7 +88,6 @@ def print_mrchem_bas_file(atoms, basis):
                     funcs_per_shell[angmom] += 1
                 else:
                     funcs_per_shell[angmom] = 1
-            print(funcs_per_shell)
             f.write(f" {len(basis[symbol]):4}")
             for angmom in basis[symbol]:
                 f.write(f" {len(basis[symbol][angmom]):4}")
@@ -112,15 +111,78 @@ def print_mrchem_bas_file(atoms, basis):
                             f.write(f" {coeffs[j][i]:11.8f}")
                         f.write("\n")
 
+
+def shell_permutation(angmom):
+    if angmom == 'S':
+        return [0]
+    elif angmom == 'P':
+        return [1, 2, 0]  # zxy -> xyz
+    elif angmom == 'D':
+        # (z2, xz, yz, x2y2, xy) -> (xy, yz, z2, xz, x2y2)
+        return [4, 2, 0, 1, 3]
+    else:
+        raise NotImplementedError(f"{angmom} orbitals not implemented")
+
+
+def atom_basis_permutation(atom_basis):
+    perm = []
+
+    for angmom in atom_basis:
+        shell_perm = shell_permutation(angmom)
+
+        num_funcs = 0
+        for _, coeffs in atom_basis[angmom]:
+            num_funcs += len(coeffs)
+
+        for _ in range(num_funcs):
+            offset = len(perm)
+            for i in shell_perm:
+                perm.append(i + offset)
+
+    return perm
+
+
+def make_basis_permutation(atoms, basis):
+    atom_type_order = {}
+
+    for s, _, _ in atoms:
+        if s not in atom_type_order:
+            atom_type_order[s] = len(atom_type_order)
+
+    atoms_ordered = [(atom_type_order[s], i)
+                     for i, (s, _, _) in enumerate(atoms)]
+    atoms_ordered.sort()
+
+    atoms_perm = [i for _, i in atoms_ordered]
+
+    atom_basis_perms = {s: atom_basis_permutation(basis[s]) for s in basis}
+
+    atoms_offsets = []
+    offset = 0
+    for s, _, _ in atoms:
+        atoms_offsets.append(offset)
+        offset += len(atom_basis_perms[s])
+
+    perm = []
+
+    for i in atoms_perm:
+        s = atoms[i][0]
+        for j in atom_basis_perms[s]:
+            perm.append(j + atoms_offsets[i])
+
+    return perm
+
+
 if __name__ == "__main__":
     with open(sys.argv[1]) as orca_file:
         atoms = read_geometry(orca_file)
         basis = read_basis(orca_file)
 
-        print(basis)
-        print()
-
         print_mrchem_bas_file(atoms, basis)
+
+        mo_perm = make_basis_permutation(atoms, basis)
+
+        print(mo_perm)
 
         # for l in orca_file:
         #     if l.strip() == "BASIS SET IN INPUT FORMAT":
