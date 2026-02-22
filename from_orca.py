@@ -28,9 +28,42 @@ def read_basis(orca_file):
         if l.strip() == "BASIS SET IN INPUT FORMAT":
             break
 
+    orca_file.readline()
+
     basis = {}
 
-    
+    for l in orca_file:
+        if l.startswith('-'):
+            break
+        elif l.strip().startswith("NewGTO"):
+            _, element = l.split()
+
+            basis[element] = {}
+
+            for l in orca_file:
+                if l.strip() == "end;":
+                    break
+                angmom, nprim = l.split()
+                nprim = int(nprim)
+
+                if angmom not in basis[element]:
+                    basis[element][angmom] = []
+
+                exps = []
+                coeffs = []
+
+                for _ in range(nprim):
+                    _, e, c = orca_file.readline().split()
+                    exps.append(float(e))
+                    coeffs.append(float(c))
+
+                if len(basis[element][angmom]) != 0 and \
+                        basis[element][angmom][-1][0] == exps:
+                    basis[element][angmom][-1][1].append(coeffs)
+                else:
+                    basis[element][angmom].append((exps, [coeffs]))
+
+    return basis
 
 
 if __name__ == "__main__":
@@ -38,6 +71,10 @@ if __name__ == "__main__":
         atoms = read_geometry(orca_file)
 
         pprint(atoms)
+
+        basis = read_basis(orca_file)
+
+        print(basis)
 
         # for l in orca_file:
         #     if l.strip() == "BASIS SET IN INPUT FORMAT":
