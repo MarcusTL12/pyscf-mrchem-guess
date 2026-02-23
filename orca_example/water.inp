@@ -1,0 +1,21 @@
+* XYZ 0 1
+H      -1.4375  0.0000   1.0250
+O       0.0000  0.0000  -0.1250
+H       1.4375  0.0000   1.0250
+*
+
+%compound
+NewStep
+!BLYP cc-pVDZ Bohrs
+%loc
+  LocMet PM
+  Occ true
+end
+StepEnd
+
+NewStep
+!LargePrint Bohrs MoRead NoIter
+%MoInp "water_Compound_1.loc"
+StepEnd
+
+EndRun
