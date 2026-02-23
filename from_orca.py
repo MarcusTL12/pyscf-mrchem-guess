@@ -112,16 +112,31 @@ def print_mrchem_bas_file(atoms, basis):
                         f.write("\n")
 
 
+angmom_to_l = {
+    'S': 0,
+    'P': 1,
+    'D': 2,
+    'F': 3,
+    'G': 4,
+    'H': 5,
+}
+
+
 def shell_permutation(angmom):
-    if angmom == 'S':
-        return [0]
-    elif angmom == 'P':
-        return [1, 2, 0]  # zxy -> xyz
-    elif angmom == 'D':
-        # (z2, xz, yz, x2y2, xy) -> (xy, yz, z2, xz, x2y2)
-        return [4, 2, 0, 1, 3]
-    else:
-        raise NotImplementedError(f"{angmom} orbitals not implemented")
+    if angmom == 'P':
+        return [1, 2, 0]  # Hardcode xyz order for p orbitals
+
+    l = angmom_to_l[angmom]
+
+    m_to_i = {m: i for i, m in enumerate(range(-l, l+1))}
+
+    perm = [m_to_i[0]]
+
+    for m in range(l):
+        perm.append(m_to_i[m + 1])
+        perm.append(m_to_i[-(m + 1)])
+
+    return invert_perm(perm)
 
 
 def atom_basis_permutation(atom_basis):
