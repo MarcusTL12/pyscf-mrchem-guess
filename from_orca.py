@@ -81,7 +81,7 @@ def print_mrchem_bas_file(atoms, basis):
 
         for symbol in atom_coord_dict:
             q, coords = atom_coord_dict[symbol]
-            f.write(f"{q:9}. {len(coords):4}")
+            f.write(f"{q:9} {len(coords):4}")
             funcs_per_shell = {}
             for angmom in basis[symbol]:
                 if angmom in funcs_per_shell:
