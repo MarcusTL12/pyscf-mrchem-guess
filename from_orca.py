@@ -173,6 +173,71 @@ def make_basis_permutation(atoms, basis):
     return perm
 
 
+def invert_perm(perm):
+    invperm = [-1 for _ in perm]
+
+    for i, j in enumerate(perm):
+        invperm[j] = i
+
+    return invperm
+
+
+def read_mo_block(orca_file, mo_perm):
+    mo_invperm = invert_perm(mo_perm)
+
+    mo = []
+
+    while True:
+        orca_file.readline()  # Indices
+        orca_file.readline()  # orbital energies
+
+        occupancies = [int(float(x)) for x in orca_file.readline().split()]
+
+        print(occupancies)
+
+        mo_buffers = [[0.0 for _ in mo_perm] for x in occupancies if x != 0]
+
+        orca_file.readline()
+
+        for i in mo_invperm:
+            parts = orca_file.readline().split()
+
+            for j, mo_buf in enumerate(mo_buffers):
+                mo_buf[i] = float(parts[j + 2])
+
+        for mo_buf in mo_buffers:
+            mo.extend(mo_buf)
+
+        if any(x == 0 for x in occupancies):
+            break
+
+    return mo
+
+
+def read_occ_mo(orca_file, mo_perm):
+    for l in orca_file:
+        if l.strip() == "MOLECULAR ORBITALS (RHF, ROHF)":
+            unrestrcted = False
+            break
+        elif l.strip() == "MOLECULAR ORBITALS (UHF)":
+            unrestrcted = True
+            break
+
+    orca_file.readline()
+
+    moa = read_mo_block(orca_file, mo_perm)
+
+    if unrestrcted:
+        for l in orca_file:
+            if len(l.strip()) == 0:
+                break
+        mob = read_mo_block(orca_file, mo_perm)
+    else:
+        mob = None
+
+    return moa, mob
+
+
 if __name__ == "__main__":
     with open(sys.argv[1]) as orca_file:
         atoms = read_geometry(orca_file)
@@ -183,6 +248,10 @@ if __name__ == "__main__":
         mo_perm = make_basis_permutation(atoms, basis)
 
         print(mo_perm)
+
+        mo = read_occ_mo(orca_file, mo_perm)
+
+        print(mo)
 
         # for l in orca_file:
         #     if l.strip() == "BASIS SET IN INPUT FORMAT":
