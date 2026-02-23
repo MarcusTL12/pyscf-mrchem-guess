@@ -193,8 +193,6 @@ def read_mo_block(orca_file, mo_perm):
 
         occupancies = [int(float(x)) for x in orca_file.readline().split()]
 
-        print(occupancies)
-
         mo_buffers = [[0.0 for _ in mo_perm] for x in occupancies if x != 0]
 
         orca_file.readline()
@@ -238,6 +236,23 @@ def read_occ_mo(orca_file, mo_perm):
     return moa, mob
 
 
+def print_mrchem_mo_file(filename, mo, nao):
+    with open(filename, "w") as f:
+        f.write(f"{nao:12}\n")
+        for x in mo:
+            f.write(f"{x:20.15f}\n")
+
+
+def print_mrchem_mo_files(mo, nao):
+    moa, mob = mo
+
+    if mob is None:
+        print_mrchem_mo_file("mrchem.mop", moa, nao)
+    else:
+        print_mrchem_mo_file("mrchem.moa", moa, nao)
+        print_mrchem_mo_file("mrchem.mob", mob, nao)
+
+
 if __name__ == "__main__":
     with open(sys.argv[1]) as orca_file:
         atoms = read_geometry(orca_file)
@@ -247,18 +262,6 @@ if __name__ == "__main__":
 
         mo_perm = make_basis_permutation(atoms, basis)
 
-        print(mo_perm)
-
         mo = read_occ_mo(orca_file, mo_perm)
 
-        print(mo)
-
-        # for l in orca_file:
-        #     if l.strip() == "BASIS SET IN INPUT FORMAT":
-        #         print("found 1")
-        #         break
-
-        # for l in orca_file:
-        #     if l.strip() == "AUXILIARY/J BASIS SET INFORMATION":
-        #         print("found 2")
-        #         break
+    print_mrchem_mo_files(mo, len(mo_perm))
