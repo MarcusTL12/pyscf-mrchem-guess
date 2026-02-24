@@ -158,12 +158,58 @@ def make_mo_permutation(atoms, basis_sets):
     return perm
 
 
+def read_occ_mo(mol):
+    restricted = mol["HFTyp"] == "RHF"
+
+    moa = []
+
+    i = 0
+
+    orbitals = mol["MolecularOrbitals"]["MOs"]
+
+    while orbitals[i]["Occupancy"] > 0:
+        moa.extend(orbitals[i]["MOCoefficients"])
+        i += 1
+
+    if restricted:
+        return (moa, None)
+
+    while orbitals[i]["Occupancy"] == 0:
+        i += 1
+
+    mob = []
+
+    while orbitals[i]["Occupancy"] > 0:
+        mob.extend(orbitals[i]["MOCoefficients"])
+        i += 1
+
+    return (moa, mob)
+
+
+def print_mrchem_mo_file(filename, mo, nao):
+    with open(filename, "w") as f:
+        f.write(f"{nao:12}\n")
+        for x in mo:
+            f.write(f"{x:20.15f}\n")
+
+
+def print_mrchem_mo_files(mo, nao):
+    moa, mob = mo
+
+    if mob is None:
+        print_mrchem_mo_file("mrchem.mop", moa, nao)
+    else:
+        print_mrchem_mo_file("mrchem.moa", moa, nao)
+        print_mrchem_mo_file("mrchem.mob", mob, nao)
+
 
 if __name__ == "__main__":
     with open(sys.argv[1]) as orca_file:
         orca_json = json.load(orca_file)
 
-    atoms = orca_json["Molecule"]["Atoms"]
+    mol = orca_json["Molecule"]
+
+    atoms = mol["Atoms"]
 
     basis_sets = organize_basis(atoms)
 
@@ -171,4 +217,6 @@ if __name__ == "__main__":
 
     mo_perm = make_mo_permutation(atoms, basis_sets)
 
-    print(mo_perm)
+    mo = read_occ_mo(mol)
+
+    print_mrchem_mo_files(mo, len(mo_perm))
