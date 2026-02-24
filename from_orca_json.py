@@ -222,7 +222,7 @@ if __name__ == "__main__":
     if mol["CoordinateUnits"] == "Bohrs":
         coord_scale = 1.0
     elif mol["CoordinateUnits"] == "Angs":
-        coord_scale = 1.8897261339211073
+        coord_scale = 1.8897261339212517
 
     print_mrchem_bas_file(atoms, basis_sets, coord_scale)
 
