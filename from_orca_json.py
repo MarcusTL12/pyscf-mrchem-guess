@@ -69,34 +69,106 @@ def organize_basis(atoms):
         else:
             basis_sets[basis_hash][3].append(atom["Idx"])
 
-    basis_sets = list(basis_sets.values())
+    return list(basis_sets.values())
 
-    # print(basis_sets)
 
-    print_mrchem_bas_file(atoms, basis_sets)
+def invert_perm(perm):
+    invperm = [-1 for _ in perm]
 
+    for i, j in enumerate(perm):
+        invperm[j] = i
+
+    return invperm
+
+
+angmom_to_l = {
+    's': 0,
+    'p': 1,
+    'd': 2,
+    'f': 3,
+    'g': 4,
+    'h': 5,
+}
+
+
+def shell_permutation(angmom):
+    if angmom == 'p':
+        return [1, 2, 0]  # Hardcode xyz order for p orbitals
+
+    l = angmom_to_l[angmom]
+
+    m_to_i = {m: i for i, m in enumerate(range(-l, l+1))}
+
+    perm = [m_to_i[0]]
+
+    for m in range(l):
+        perm.append(m_to_i[m + 1])
+        perm.append(m_to_i[-(m + 1)])
+
+    return invert_perm(perm)
+
+
+def atom_basis_permutation(atom_basis):
+    perm = []
+
+    for angmom in atom_basis:
+        shell_perm = shell_permutation(angmom)
+
+        num_funcs = 0
+        for _, coeffs in atom_basis[angmom]:
+            num_funcs += len(coeffs)
+
+        for _ in range(num_funcs):
+            offset = len(perm)
+            for i in shell_perm:
+                perm.append(i + offset)
+
+    return perm
+
+
+def make_mo_permutation(atoms, basis_sets):
     atoms_perm = []
 
     for _, _, _, idxs in basis_sets:
         for i in idxs:
             atoms_perm.append(i)
 
-    print("Atom perm:", atoms_perm)
+    atom_basis_perms = [
+        atom_basis_permutation(basis) for _, _, basis, _ in basis_sets
+    ]
+
+    atom_to_basis = [-1 for _ in atoms_perm]
+
+    for i, (_, _, _, idxs) in enumerate(basis_sets):
+        for j in idxs:
+            atom_to_basis[j] = i
+
+    atoms_offsets = []
+    offset = 0
+    for i in atom_to_basis:
+        atoms_offsets.append(offset)
+        offset += len(atom_basis_perms[i])
+
+    perm = []
+
+    for i in atoms_perm:
+        for j in atom_basis_perms[atom_to_basis[i]]:
+            perm.append(j + atoms_offsets[i])
+
+    return perm
+
 
 
 if __name__ == "__main__":
     with open(sys.argv[1]) as orca_file:
         orca_json = json.load(orca_file)
 
-    organize_basis(orca_json["Molecule"]["Atoms"])
+    atoms = orca_json["Molecule"]["Atoms"]
 
-    # atoms = read_geometry(orca_file)
-    # basis = read_basis(orca_file)
+    basis_sets = organize_basis(atoms)
 
-    # print_mrchem_bas_file(atoms, basis)
+    print_mrchem_bas_file(atoms, basis_sets)
 
-    # mo_perm = make_basis_permutation(atoms, basis)
+    mo_perm = make_mo_permutation(atoms, basis_sets)
 
-    # mo = read_occ_mo(orca_file, mo_perm)
-
-    # print_mrchem_mo_files(mo, len(mo_perm))
+    print(mo_perm)
