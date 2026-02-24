@@ -23,7 +23,7 @@ def consolidate_basis(basis):
             for angmom, shell_basis in new_basis.items()}
 
 
-def print_mrchem_bas_file(atoms, basis_sets):
+def print_mrchem_bas_file(atoms, basis_sets, coord_scale):
     with open("mrchem.bas", "w") as f:
         f.write("Gaussian basis from ORCA gbw json file\n")
         f.write(f"{len(basis_sets):9}\n")
@@ -39,7 +39,7 @@ def print_mrchem_bas_file(atoms, basis_sets):
                 coord = atoms[i]["Coords"]
                 f.write(f"{symbol} ")
                 for x in coord:
-                    f.write(f" {x:18.10f}")
+                    f.write(f" {x * coord_scale:18.10f}")
                 f.write("\n")
 
             for shells in basis.values():
@@ -219,7 +219,12 @@ if __name__ == "__main__":
 
     basis_sets = organize_basis(atoms)
 
-    print_mrchem_bas_file(atoms, basis_sets)
+    if mol["CoordinateUnits"] == "Bohrs":
+        coord_scale = 1.0
+    elif mol["CoordinateUnits"] == "Angs":
+        coord_scale = 1.8897261339211073
+
+    print_mrchem_bas_file(atoms, basis_sets, coord_scale)
 
     mo_perm = make_mo_permutation(atoms, basis_sets)
 
