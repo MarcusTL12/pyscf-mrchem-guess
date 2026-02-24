@@ -158,8 +158,14 @@ def make_mo_permutation(atoms, basis_sets):
     return perm
 
 
-def read_occ_mo(mol):
+def permute(array, perm):
+    return [array[i] for i in perm]
+
+
+def read_occ_mo(mol, mo_perm):
     restricted = mol["HFTyp"] == "RHF"
+
+    mo_buf = [0.0 for _ in mo_perm]
 
     moa = []
 
@@ -168,7 +174,7 @@ def read_occ_mo(mol):
     orbitals = mol["MolecularOrbitals"]["MOs"]
 
     while orbitals[i]["Occupancy"] > 0:
-        moa.extend(orbitals[i]["MOCoefficients"])
+        moa.extend(permute(orbitals[i]["MOCoefficients"], mo_perm))
         i += 1
 
     if restricted:
@@ -180,7 +186,7 @@ def read_occ_mo(mol):
     mob = []
 
     while orbitals[i]["Occupancy"] > 0:
-        mob.extend(orbitals[i]["MOCoefficients"])
+        mob.extend(permute(orbitals[i]["MOCoefficients"], mo_perm))
         i += 1
 
     return (moa, mob)
@@ -217,6 +223,6 @@ if __name__ == "__main__":
 
     mo_perm = make_mo_permutation(atoms, basis_sets)
 
-    mo = read_occ_mo(mol)
+    mo = read_occ_mo(mol, mo_perm)
 
     print_mrchem_mo_files(mo, len(mo_perm))
