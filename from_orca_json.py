@@ -2,7 +2,6 @@
 
 import sys
 import json
-from pprint import pprint
 
 
 def consolidate_basis(basis):
